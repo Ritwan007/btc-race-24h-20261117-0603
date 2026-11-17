@@ -142,16 +142,12 @@ class MeanReversion:
         bar: the exit intent retries until it fills.
         """
         total = self.trailing_mean_sum(close)
-        if close * LOOKBACK >= total:
-            reason = "reversion"
-        elif self.entry_price is not None and \
-                close * BPS <= self.entry_price * (BPS - STOP_BPS):
-            reason = "disaster-stop"
-        elif self.bars_held >= MAX_HOLD_BARS:
-            reason = "time"
-        else:
+        reverted = close * LOOKBACK >= total
+        stopped = self.entry_price is not None and \
+            close * BPS <= self.entry_price * (BPS - STOP_BPS)
+        expired = self.bars_held >= MAX_HOLD_BARS
+        if not (reverted or stopped or expired):
             return None
-        _ = reason  # the wire carries orders, not reasons
         return {
             "side": "sell",
             "symbol": SYMBOL,
